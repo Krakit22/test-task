@@ -1,0 +1,105 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: dmitriy
+      comment: Create table files
+      changes:
+        - createTable:
+            tableName: files
+            remarks: Files table
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                  remarks: ID
+              - column:
+                  name: url
+                  type: VARCHAR(2048)
+                  constraints:
+                    nullable: false
+                  remarks: File URL
+              - column:
+                  name: size
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                  remarks: File size
+              - column:
+                  name: content_type
+                  type: VARCHAR(100)
+                  remarks: File content type
+              - column:
+                  name: content
+                  type: BYTEA
+                  remarks: File content
+  - changeSet:
+      id: 2
+      author: dmitriy
+      comment: Create table summary
+      changes:
+        - createTable:
+            tableName: summary
+            remarks: Files summary
+            columns:
+              - column:
+                  name: files_count
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                  remarks: Files count
+              - column:
+                  name: files_size
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                  remarks: Files size
+  - changeSet:
+      id: 3
+      author: dmitriy
+      comment: Insert initial value into summary
+      changes:
+        - insert:
+            tableName: summary
+            columns:
+              - column:
+                  name: files_count
+                  value: 0
+              - column:
+                  name: files_size
+                  value: 0
+  - changeSet:
+      id: 4
+      author: dmitriy
+      comment: Create function summary_aggregation
+      changes:
+        - sql:
+            dbms: 'postgresql'
+            endDelimiter: \nGO
+            splitStatements: true
+            sql: create or replace function summary_aggregation() returns trigger as
+              $$
+              BEGIN
+              update summary set files_count = files_count + 1, files_size = files_size + NEW.size;
+              return null;
+              END
+              $$ LANGUAGE 'plpgsql'
+            stripComments: true
+  - changeSet:
+      id: 5
+      author: dmitriy
+      comment: Create trigger summary_trigger
+      changes:
+        - sql:
+            dbms: 'postgresql'
+            endDelimiter: \nGO
+            splitStatements: true
+            sql: create trigger summary_trigger
+              after insert
+              on files
+              for each row
+              execute procedure summary_aggregation()
+            stripComments: true

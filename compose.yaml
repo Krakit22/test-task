@@ -1,0 +1,21 @@
+services:
+  db:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=test_file'
+      - 'POSTGRES_PASSWORD=postgres'
+      - 'POSTGRES_USER=postgres'
+    ports:
+      - '5432'
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      - SPRING_PROFILES_ACTIVE=stage
+    volumes:
+      - ./src/main/resources/application-stage.properties:/application-stage.properties
+    depends_on:
+      - db
